@@ -10,12 +10,8 @@ interface ProjectItem {
   duration: string;
   location: string;
   scope: string[];
-  crop: {
-    x: number; // percentage of reference image width
-    y: number; // percentage of reference image height
-    w: number; // width percentage
-    h: number; // height percentage
-  };
+  imageUrl: string;
+  fallbackUrl: string;
 }
 
 const PROJECTS: ProjectItem[] = [
@@ -24,7 +20,7 @@ const PROJECTS: ProjectItem[] = [
     category: 'Residencial',
     title: 'Residência Vale dos Cristais',
     shortDesc:
-      'Obra residencial de alto padrão com estrutura em concreto protendido, grandes vãos livres, caixilharia minimalista e espelho d’água integrado.',
+      'Obra residencial de alto padrão com estrutura em concreto protendido, grandes vãos livres, caixilharia minimalista e iluminação arquitetônica integrada.',
     area: '740 m²',
     duration: '14 meses',
     location: 'São Paulo · SP',
@@ -33,42 +29,45 @@ const PROJECTS: ProjectItem[] = [
       'Fundação, supraestrutura em concreto e impermeabilização',
       'Acabamentos nobres, luminotécnica e área de lazer completa',
     ],
-    // Center photo from reference poster (Luxury modern residential pavilion with pool)
-    crop: { x: 36.1, y: 77.0, w: 27.8, h: 15.2 },
+    imageUrl: '/assets/obras/residencial.jpg',
+    fallbackUrl:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85',
   },
   {
     id: 'comercial',
     category: 'Comercial',
     title: 'Boulevard & Galeria Lumina',
     shortDesc:
-      'Obra comercial contemporânea com cobertura em balanço estrutural, fachada ativa de dupla altura e infraestrutura completa para operações premium.',
+      'Edificação comercial contemporânea com fachada em revestimento mineral e alumínio preto, esquadrias de alta performance e infraestrutura completa.',
     area: '1.850 m²',
     duration: '11 meses',
     location: 'Campinas · SP',
     scope: [
       'Gerenciamento integral de contratos e suprimentos',
-      'Execução de estrutura metálica de grande vão e pele de vidro',
+      'Execução de estrutura de concreto, alvenaria técnica e fachada',
       'Instalações prediais de climatização, prevenção e automação',
     ],
-    // Right photo from reference poster (Futuristic commercial complex plaza)
-    crop: { x: 67.3, y: 77.0, w: 27.8, h: 15.2 },
+    imageUrl: '/assets/obras/comercial.jpg',
+    fallbackUrl:
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=85',
   },
   {
     id: 'corporativa',
     category: 'Corporativa',
     title: 'Edifício Corporativo Atrium',
     shortDesc:
-      'Obra corporativa e retrofit executivo com 14 pavimentos, fachada com eficiência termoacústica, lobby monumental e rigoroso cumprimento de cronograma.',
+      'Implantação e execução de complexo corporativo em aço e vidro com eficiência termoacústica, forro monumental e rigoroso cumprimento de cronograma.',
     area: '4.200 m²',
     duration: '18 meses',
     location: 'São Paulo · SP',
     scope: [
       'Compatibilização BIM e fiscalização técnica diária',
-      'Execução civil de lajes corporativas e núcleo rígido',
+      'Execução civil de lajes corporativas e estrutura metálica',
       'Comissionamento de sistemas críticos e entrega Turnkey',
     ],
-    // Left photo from reference poster (Corporate illuminated tower at night)
-    crop: { x: 5.4, y: 77.0, w: 27.8, h: 15.2 },
+    imageUrl: '/assets/obras/corporativa.jpg',
+    fallbackUrl:
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=85',
   },
 ];
 
@@ -450,55 +449,52 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {PROJECTS.map((project) => {
-              const scaleW = 100 / project.crop.w;
-              const scaleH = 100 / project.crop.h;
-
-              return (
-                <article
-                  key={project.id}
-                  onClick={() => setSelectedProject(project)}
-                  className="group cursor-pointer flex flex-col"
-                >
-                  {/* Realistic Architectural Photo Container */}
-                  <div className="relative w-full aspect-[6/5] bg-[#1A1C22] border border-[#C5A059]/25 overflow-hidden mb-5">
-                    <img
-                      src="/assets/aistudio/image_655cdd3a.png"
-                      alt={`${project.title} - Obra ${project.category}`}
-                      referrerPolicy="no-referrer"
-                      className="absolute top-0 left-0 max-w-none transition-transform duration-200 group-hover:scale-[1.03]"
-                      style={{
-                        width: `${scaleW * 100}%`,
-                        height: `${scaleH * 100}%`,
-                        transform: `translate(-${project.crop.x}%, -${project.crop.y}%)`,
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111215]/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-xs text-[#E8E3DA]">
-                      <span className="tracking-[0.14em] uppercase text-[#E5C88D] font-medium">
-                        Obra {project.category}
-                      </span>
-                      <span className="tabular-nums text-[#D0CBC1]">
-                        {project.area} · {project.duration}
-                      </span>
-                    </div>
+            {PROJECTS.map((project) => (
+              <article
+                key={project.id}
+                onClick={() => setSelectedProject(project)}
+                className="group cursor-pointer flex flex-col"
+              >
+                {/* Real Architectural Photo Container */}
+                <div className="relative w-full aspect-[6/5] bg-[#1A1C22] border border-[#C5A059]/30 overflow-hidden mb-5">
+                  <img
+                    src={project.imageUrl}
+                    alt={`${project.title} - Obra ${project.category}`}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== project.fallbackUrl) {
+                        target.src = project.fallbackUrl;
+                      }
+                    }}
+                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.03] brightness-95 contrast-[1.04]"
+                  />
+                  {/* Subtle dark gradient scrim at bottom for guaranteed text legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D0E11]/90 via-[#111215]/25 to-transparent" />
+                  <div className="absolute bottom-3.5 left-4 right-4 flex items-center justify-between gap-2 text-[11px] lg:text-xs text-[#E8E3DA]">
+                    <span className="tracking-[0.12em] uppercase text-[#E5C88D] font-medium whitespace-nowrap shrink-0">
+                      Obra {project.category}
+                    </span>
+                    <span className="tabular-nums text-[#E0DBD1] whitespace-nowrap shrink-0">
+                      {project.area} · {project.duration}
+                    </span>
                   </div>
+                </div>
 
-                  {/* Card Text */}
-                  <div className="pt-1">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <h3 className="font-serif-display text-2xl font-medium text-[#E5C88D] group-hover:text-[#F3D99F] transition-colors">
-                        {project.title}
-                      </h3>
-                      <ArrowUpRight className="w-4 h-4 text-[#C5A059] opacity-75 group-hover:opacity-100 shrink-0" />
-                    </div>
-                    <p className="text-sm text-[#A8A39A] leading-relaxed">
-                      {project.shortDesc}
-                    </p>
+                {/* Card Text */}
+                <div className="pt-1">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="font-serif-display text-2xl font-medium text-[#E5C88D] group-hover:text-[#F3D99F] transition-colors">
+                      {project.title}
+                    </h3>
+                    <ArrowUpRight className="w-4 h-4 text-[#C5A059] opacity-75 group-hover:opacity-100 shrink-0" />
                   </div>
-                </article>
-              );
-            })}
+                  <p className="text-sm text-[#A8A39A] leading-relaxed">
+                    {project.shortDesc}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -614,6 +610,22 @@ export default function App() {
             >
               <X className="w-5 h-5" />
             </button>
+
+            <div className="relative w-full h-48 mb-5 border border-[#C5A059]/25 overflow-hidden bg-[#111215]">
+              <img
+                src={selectedProject.imageUrl}
+                alt={selectedProject.title}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== selectedProject.fallbackUrl) {
+                    target.src = selectedProject.fallbackUrl;
+                  }
+                }}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#16181D] via-transparent to-transparent" />
+            </div>
 
             <p className="text-xs tracking-[0.2em] uppercase text-[#C5A059] mb-2">
               Obra {selectedProject.category} · {selectedProject.location}
