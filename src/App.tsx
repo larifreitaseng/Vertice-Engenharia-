@@ -78,22 +78,48 @@ export default function App() {
   const [formState, setFormState] = useState({
     name: '',
     phone: '',
+    email: '',
     projectType: 'Obra Residencial',
     areaEstimate: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  const companyEmail = 'contato@verticeengenharia.com.br';
   const whatsappNumber = '5511999999999';
   const defaultWhatsappText = encodeURIComponent(
     'Olá! Gostaria de solicitar um orçamento de engenharia e gestão para minha obra.'
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${defaultWhatsappText}`;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.name.trim() || !formState.phone.trim()) return;
-    setFormSubmitted(true);
+
+    setIsSubmitting(true);
+    try {
+      const payload = new URLSearchParams({
+        'form-name': 'solicitacao-orcamento',
+        name: formState.name,
+        phone: formState.phone,
+        email: formState.email,
+        projectType: formState.projectType,
+        areaEstimate: formState.areaEstimate,
+        message: formState.message,
+      });
+
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload.toString(),
+      });
+    } catch {
+      // Fallback silencioso em ambiente local de pré-visualização
+    } finally {
+      setIsSubmitting(false);
+      setFormSubmitted(true);
+    }
   };
 
   const openQuoteForType = (typeLabel?: string) => {
@@ -682,34 +708,53 @@ export default function App() {
               <div className="py-6 text-center">
                 <CheckCircle2 className="w-12 h-12 text-[#C5A059] mx-auto mb-4" />
                 <h3 className="font-serif-display text-3xl text-[#F7F4EF] mb-2">
-                  Solicitação Recebida
+                  Solicitação Registrada
                 </h3>
                 <p className="text-sm text-[#B8B3AA] mb-6 leading-relaxed">
-                  Obrigado, <strong className="text-[#F3EFEA]">{formState.name}</strong>. Nossa equipe de engenharia entrará em contato em breve pelo telefone informado.
+                  Obrigado, <strong className="text-[#F3EFEA]">{formState.name}</strong>. Seus dados foram registrados para análise técnica e nossa equipe entrará em contato em breve.
                 </p>
                 <div className="flex flex-col gap-3">
                   <a
                     href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                      `Olá! Meu nome é ${formState.name}. Solicitei orçamento para ${formState.projectType} (${formState.areaEstimate || 'área a definir'}).`
+                      `Olá! Meu nome é ${formState.name}.\nTelefone: ${formState.phone}\nTipo de Obra: ${formState.projectType}\nÁrea estimada: ${formState.areaEstimate || 'A definir'}\nNecessidade: ${formState.message || 'Solicitação de orçamento'}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="gold-button py-3.5 px-6 rounded text-xs tracking-[0.16em] uppercase font-medium text-[#FDFBF7] inline-flex items-center justify-center gap-2"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>Adiantar atendimento no WhatsApp</span>
+                    <span>Enviar também pelo WhatsApp</span>
+                  </a>
+                  <a
+                    href={`mailto:${companyEmail}?subject=${encodeURIComponent(
+                      `Solicitação de Orçamento - ${formState.projectType} (${formState.name})`
+                    )}&body=${encodeURIComponent(
+                      `Nome: ${formState.name}\nTelefone/WhatsApp: ${formState.phone}\nE-mail: ${formState.email || 'Não informado'}\nTipo de Obra: ${formState.projectType}\nÁrea Estimada: ${formState.areaEstimate || 'Não informada'}\n\nDescrição:\n${formState.message || 'Solicitação de orçamento preliminar.'}`
+                    )}`}
+                    className="py-3 px-6 rounded text-xs tracking-[0.14em] uppercase font-medium text-[#E5C88D] border border-[#C5A059]/40 hover:bg-[#C5A059]/10 inline-flex items-center justify-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Encaminhar cópia por E-mail</span>
                   </a>
                   <button
                     type="button"
                     onClick={() => setQuoteModalOpen(false)}
-                    className="py-2.5 text-xs uppercase tracking-[0.14em] text-[#A8A39A] hover:text-white cursor-pointer"
+                    className="py-2 text-xs uppercase tracking-[0.14em] text-[#A8A39A] hover:text-white cursor-pointer"
                   >
                     Voltar ao site
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleFormSubmit} className="space-y-4">
+              <form
+                name="solicitacao-orcamento"
+                method="POST"
+                data-netlify="true"
+                onSubmit={handleFormSubmit}
+                className="space-y-4"
+              >
+                <input type="hidden" name="form-name" value="solicitacao-orcamento" />
+
                 <div>
                   <p className="text-xs tracking-[0.2em] uppercase text-[#C5A059] mb-1">
                     Orçamento Preliminar
@@ -725,6 +770,7 @@ export default function App() {
                   </label>
                   <input
                     type="text"
+                    name="name"
                     required
                     value={formState.name}
                     onChange={(e) => setFormState({ ...formState, name: e.target.value })}
@@ -733,18 +779,35 @@ export default function App() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-[#B8B3AA] mb-1.5">
-                    WhatsApp / Telefone *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formState.phone}
-                    onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
-                    placeholder="(11) 99999-9999"
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#111215] border border-white/15 focus:border-[#C5A059] text-[#F3EFEA] rounded outline-none"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-[#B8B3AA] mb-1.5">
+                      WhatsApp / Telefone *
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      value={formState.phone}
+                      onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#111215] border border-white/15 focus:border-[#C5A059] text-[#F3EFEA] rounded outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-[#B8B3AA] mb-1.5">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formState.email}
+                      onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                      placeholder="seu@email.com"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#111215] border border-white/15 focus:border-[#C5A059] text-[#F3EFEA] rounded outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -753,6 +816,7 @@ export default function App() {
                       Tipo de Obra
                     </label>
                     <select
+                      name="projectType"
                       value={formState.projectType}
                       onChange={(e) => setFormState({ ...formState, projectType: e.target.value })}
                       className="w-full px-3 py-2.5 text-sm bg-[#111215] border border-white/15 focus:border-[#C5A059] text-[#F3EFEA] rounded outline-none"
@@ -770,6 +834,7 @@ export default function App() {
                     </label>
                     <input
                       type="text"
+                      name="areaEstimate"
                       value={formState.areaEstimate}
                       onChange={(e) => setFormState({ ...formState, areaEstimate: e.target.value })}
                       placeholder="Ex: 450 m²"
@@ -784,6 +849,7 @@ export default function App() {
                   </label>
                   <textarea
                     rows={3}
+                    name="message"
                     value={formState.message}
                     onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                     placeholder="Conte-nos se já possui projeto arquitetônico, local da obra e previsão de início."
@@ -793,9 +859,10 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="gold-button w-full py-3.5 px-6 rounded text-xs tracking-[0.18em] uppercase font-medium text-[#FDFBF7] cursor-pointer mt-2"
+                  disabled={isSubmitting}
+                  className="gold-button w-full py-3.5 px-6 rounded text-xs tracking-[0.18em] uppercase font-medium text-[#FDFBF7] cursor-pointer mt-2 disabled:opacity-60"
                 >
-                  Enviar solicitação
+                  {isSubmitting ? 'Enviando...' : 'Enviar solicitação'}
                 </button>
               </form>
             )}

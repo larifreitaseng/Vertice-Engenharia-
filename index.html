@@ -14,6 +14,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-[#111215] text-[#F3EFEA] antialiased selection:bg-[#C5A059]/30 selection:text-[#F3EFEA]">
+    <!-- Formulário oculto para detecção automática do Netlify Forms no build -->
+    <form name="solicitacao-orcamento" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="solicitacao-orcamento" />
+      <input type="text" name="name" />
+      <input type="tel" name="phone" />
+      <input type="email" name="email" />
+      <input type="text" name="projectType" />
+      <input type="text" name="areaEstimate" />
+      <textarea name="message"></textarea>
+    </form>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
