@@ -92,29 +92,48 @@ export default function App() {
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${defaultWhatsappText}`;
 
+  const GOOGLE_SHEETS_WEBHOOK_URL =
+    'https://script.google.com/macros/s/AKfycbwIMGKTzTAb2w2Hb4plS8E2o4Nr9C2bpQujcvNXkKjMtokGmshPYKrTGmMFZEZ8as9w/exec';
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.name.trim() || !formState.phone.trim()) return;
 
     setIsSubmitting(true);
     try {
-      const payload = new URLSearchParams({
-        'form-name': 'solicitacao-orcamento',
+      const dataPayload = {
         name: formState.name,
         phone: formState.phone,
         email: formState.email,
         projectType: formState.projectType,
         areaEstimate: formState.areaEstimate,
         message: formState.message,
+      };
+
+      // 1. Envia para a planilha do Google Sheets (Google Apps Script)
+      // Usamos no-cors e text/plain para compatibilidade perfeita com o Google Apps Script sem bloqueio de CORS no navegador
+      await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(dataPayload),
       });
 
-      await fetch('/', {
+      // 2. Envia também para o Netlify Forms como backup silencioso
+      const netlifyPayload = new URLSearchParams({
+        'form-name': 'solicitacao-orcamento',
+        ...dataPayload,
+      });
+
+      fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: payload.toString(),
-      });
-    } catch {
-      // Fallback silencioso em ambiente local de pré-visualização
+        body: netlifyPayload.toString(),
+      }).catch(() => {});
+    } catch (err) {
+      console.warn('Erro ao registrar formulário:', err);
     } finally {
       setIsSubmitting(false);
       setFormSubmitted(true);
@@ -130,39 +149,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#111215] text-[#F3EFEA] relative overflow-x-hidden">
-      {/* Subtle Architectural Geometric Background Lines */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <svg
-          className="w-full h-full opacity-[0.14]"
-          viewBox="0 0 1440 2400"
-          fill="none"
-          preserveAspectRatio="xMidYMin slice"
-        >
-          {/* Diagonal projection rays inspired by reference top-right */}
-          <line x1="620" y1="0" x2="1280" y2="950" stroke="#C5A059" strokeWidth="0.75" />
-          <line x1="780" y1="0" x2="1440" y2="820" stroke="#C5A059" strokeWidth="0.75" />
-          <line x1="1180" y1="0" x2="1180" y2="2400" stroke="#C5A059" strokeWidth="0.5" strokeDasharray="3 6" />
-          <line x1="1260" y1="0" x2="1260" y2="900" stroke="#C5A059" strokeWidth="0.5" />
-          <line x1="0" y1="780" x2="1440" y2="780" stroke="#C5A059" strokeWidth="0.6" />
-          <line x1="0" y1="1220" x2="1440" y2="1220" stroke="#C5A059" strokeWidth="0.6" />
-          <polygon
-            points="700,0 1120,0 1380,540 980,540"
-            fill="url(#goldRay)"
-            opacity="0.18"
-          />
-          <defs>
-            <linearGradient id="goldRay" x1="900" y1="0" x2="1200" y2="540" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#D6B472" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#111215" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-
-      {/* TOPO: 3-Zone Header */}
-      <header className="relative z-20 border-b border-[#C5A059]/15 bg-[#111215]/90 backdrop-blur-md">
-        <div className="max-w-[1200px] mx-auto px-6 py-5 flex items-center justify-between gap-8">
+    <div className="min-h-screen bg-[#111215] text-[#F3EFEA] relative">
+      {/* TOPO: Fixed Header always visible */}
+      <header className="fixed top-0 left-0 right-0 w-full z-50 border-b border-[#C5A059]/15 bg-[#111215]/95 backdrop-blur-md shadow-[0_4px_25px_rgba(0,0,0,0.7)]">
+        <div className="max-w-[1200px] mx-auto px-6 py-4 md:py-5 flex items-center justify-between gap-8">
           {/* Zone 1: Brand Logo & Name */}
           <a
             href="#"
@@ -221,8 +211,37 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="relative z-10 border-b border-[#C5A059]/20 overflow-hidden bg-[#111215]">
+      {/* Subtle Architectural Geometric Background Lines */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+        <svg
+          className="w-full h-full opacity-[0.14]"
+          viewBox="0 0 1440 2400"
+          fill="none"
+          preserveAspectRatio="xMidYMin slice"
+        >
+          {/* Diagonal projection rays inspired by reference top-right */}
+          <line x1="620" y1="0" x2="1280" y2="950" stroke="#C5A059" strokeWidth="0.75" />
+          <line x1="780" y1="0" x2="1440" y2="820" stroke="#C5A059" strokeWidth="0.75" />
+          <line x1="1180" y1="0" x2="1180" y2="2400" stroke="#C5A059" strokeWidth="0.5" strokeDasharray="3 6" />
+          <line x1="1260" y1="0" x2="1260" y2="900" stroke="#C5A059" strokeWidth="0.5" />
+          <line x1="0" y1="780" x2="1440" y2="780" stroke="#C5A059" strokeWidth="0.6" />
+          <line x1="0" y1="1220" x2="1440" y2="1220" stroke="#C5A059" strokeWidth="0.6" />
+          <polygon
+            points="700,0 1120,0 1380,540 980,540"
+            fill="url(#goldRay)"
+            opacity="0.18"
+          />
+          <defs>
+            <linearGradient id="goldRay" x1="900" y1="0" x2="1200" y2="540" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#D6B472" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#111215" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      {/* HERO SECTION (com pt-[76px] para compensar o header fixo) */}
+      <section className="relative z-10 pt-[74px] md:pt-[82px] border-b border-[#C5A059]/20 overflow-hidden bg-[#111215]">
         <div className="max-w-[1200px] mx-auto relative min-h-[540px] lg:min-h-[620px] flex items-center">
           {/* Right Architectural Showcase Image (Strictly cropped to x:34%..100%, y:0%..51.3% of the reference image) */}
           <div
