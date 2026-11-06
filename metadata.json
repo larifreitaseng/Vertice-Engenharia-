@@ -1,0 +1,6 @@
+{
+  "name": "Vértice Engenharia & Gestão de Obras",
+  "description": "Landing page institucional para empresa de Engenharia Civil e Gestão de Obras de alto padrão, com foco em planejamento, gerenciamento e execução civil.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
